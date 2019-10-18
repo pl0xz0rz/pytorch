@@ -67,6 +67,8 @@ if(ANDROID)
     target_link_libraries(c10 PRIVATE log)
 endif()
 
+target_link_libraries(c10 PUBLIC fmt::fmt)
+
 target_include_directories(
     c10 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
@@ -91,6 +93,7 @@ endif()
 # to deal with the cmake deployment need. Inside the Caffe2Targets set, the
 # individual libraries like libc10.so and libcaffe2.so are still self-contained.
 install(TARGETS c10 EXPORT Caffe2Targets DESTINATION lib)
+install(TARGETS fmt EXPORT Caffe2Targets DESTINATION lib)
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         DESTINATION include
         FILES_MATCHING PATTERN "*.h")
