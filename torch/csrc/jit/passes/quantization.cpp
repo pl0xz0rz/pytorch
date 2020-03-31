@@ -2606,8 +2606,14 @@ void SwapDeQuant(std::shared_ptr<Graph>& graph) {
   swapDeQuant(graph->block());
 }
 
-void QuantFusion(std::shared_ptr<Graph>& graph) {
-  for (const auto& info : quant_fusion_pattern_and_replacements()) {
+void QuantFusion(std::shared_ptr<Graph>& graph, bool is_dynamic) {
+  std::vector<QuantFusionInfo> patterns;
+  if (is_dynamic) {
+    patterns = dynamic_quant_fusion_pattern_and_replacements();
+  } else {
+    patterns = quant_fusion_pattern_and_replacements();
+  }
+  for (const auto& info : patterns) {
     SubgraphRewriter rewriter;
     rewriter.RegisterRewritePattern(info.pattern, info.replacement);
     rewriter.runOnGraph(graph, info.filter);
@@ -2895,7 +2901,7 @@ void FoldQuantizedPrepackingOps(Module& module) {
   PrePackingOpsFolder(module, filter_fn, "quantized");
 }
 
-script::Module Finalize(script::Module& module) {
+script::Module Finalize(script::Module& module, bool is_dynamic) {
   SwapFunctionalLinear(module);
   auto graph = module.get_method("forward").graph();
   Inline(*graph);
@@ -2905,7 +2911,7 @@ script::Module Finalize(script::Module& module) {
   SwapDeQuant(graph);
   InsertPrepackUnpack(graph);
   ConstantPropagation(graph);
-  QuantFusion(graph);
+  QuantFusion(graph, is_dynamic);
   auto frozen = freeze_module(module);
   FoldQuantizedPrepackingOps(frozen);
   return frozen;
